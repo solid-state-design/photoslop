@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Photoslop — AI image slopification",
   "type": "module",
-  "main": "server.js",
+  "main": "photoslop.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node photoslop.js",
+    "dev": "node photoslop.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
