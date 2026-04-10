@@ -56,7 +56,7 @@ app.use((req, res, next) => {
 
 app.post('/api/slopify', async (req, res) => {
   try {
-    const { image, style } = req.body;
+    const { image, style, hilarity = 0 } = req.body;
 
     if (!image || !style) {
       return res.status(400).json({ error: 'Missing image or style' });
@@ -67,10 +67,22 @@ app.post('/api/slopify', async (req, res) => {
       return res.status(400).json({ error: `Unknown style: ${style}` });
     }
 
-    // Prefix to help avoid safety filter rejections
-    const prompt = `Create a fun, family-friendly artistic illustration. ${basePrompt} Keep the result appropriate for all ages.`;
+    // Build hilarity modifier based on slider level
+    let hilarilyModifier = '';
+    if (hilarity > 0 && hilarity <= 25) {
+      hilarilyModifier = ' Add a subtle touch of humor — slightly exaggerated expressions and one small amusing detail hidden in the scene.';
+    } else if (hilarity > 25 && hilarity <= 50) {
+      hilarilyModifier = ' Make it noticeably funny — exaggerate facial expressions, add a confused animal somewhere in the background, and make one object slightly too large.';
+    } else if (hilarity > 50 && hilarity <= 75) {
+      hilarilyModifier = ' Make it very funny and absurd — wildly exaggerated googly-eyed expressions, random unexpected objects (rubber ducks, pizza slices, tiny hats on everything), at least one thing comically oversized, and everyone looks mildly panicked for no reason.';
+    } else if (hilarity > 75) {
+      hilarilyModifier = ' Make this ABSOLUTELY UNHINGED and hilarious — maximum chaos energy. Insanely exaggerated expressions of shock and confusion, random absurd objects everywhere (giant rubber ducks, cats riding things, inexplicable explosions in the background, tiny top hats on everything), impossible proportions, someone holding a comically large sandwich, dramatic action-movie lighting on a totally mundane scene. Make people cry laughing.';
+    }
 
-    console.log(`[Photoslop] Slopifying with style: ${style}`);
+    // Prefix to help avoid safety filter rejections
+    const prompt = `Create a fun, family-friendly artistic illustration. ${basePrompt}${hilarilyModifier} Keep the result appropriate for all ages.`;
+
+    console.log(`[Photoslop] Slopifying with style: ${style}, hilarity: ${hilarity}%`);
 
     // Convert base64 data URL to a File object for the OpenAI SDK
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');

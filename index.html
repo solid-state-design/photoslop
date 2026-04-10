@@ -236,6 +236,26 @@
   .actions {
     display: flex; gap: 8px; margin-top: 18px;
   }
+  .hilarity-slider { padding: 4px 0; }
+  .hilarity-slider input[type="range"] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 6px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--panel-2), #ffd700, #ff4500);
+    outline: none;
+  }
+  .hilarity-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #ffd700; cursor: pointer; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .hilarity-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+  }
+  .hilarity-labels #hilarity-val {
+    font-weight: 700; color: var(--text);
+  }
   .btn-action {
     flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 12px 18px; border-radius: 999px;
@@ -439,6 +459,20 @@
         </div>
       </div>
 
+      <div class="cat-divider"></div>
+
+      <div class="category">
+        <h3><span class="cat-icon" style="background:rgba(255,220,50,0.15);color:#ffd700;">😂</span> Hilarifyer</h3>
+        <div class="hilarity-slider">
+          <input type="range" id="hilarity" min="0" max="100" value="0" />
+          <div class="hilarity-labels">
+            <span>Subtle</span>
+            <span id="hilarity-val">0%</span>
+            <span>Unhinged</span>
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
         <button class="btn-action" id="randoBtn" type="button">🎲 Rando</button>
         <button class="btn-action" id="resetBtn" type="button">↺ Reset</button>
@@ -547,6 +581,13 @@
     rightPane.querySelectorAll('.loading-overlay, .error-text').forEach(el => el.remove());
   }
 
+  // ── Hilarity slider ──
+  const hilarity = document.getElementById('hilarity');
+  const hilarityVal = document.getElementById('hilarity-val');
+  hilarity.addEventListener('input', () => {
+    hilarityVal.textContent = hilarity.value + '%';
+  });
+
   // ── API call ──
   async function slopify(style) {
     if (!currentImageData || isProcessing) return;
@@ -560,7 +601,7 @@
       const res = await fetch('/api/slopify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: resizedImageData, style }),
+        body: JSON.stringify({ image: resizedImageData, style, hilarity: parseInt(hilarity.value) }),
       });
 
       if (!res.ok) {
