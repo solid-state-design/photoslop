@@ -100,7 +100,7 @@ app.post('/api/slopify', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`[Photoslop] Server running at http://localhost:${PORT}`);
   console.log(`[Photoslop] OpenAI API key: ${process.env.OPENAI_API_KEY ? '✓ configured' : '✗ MISSING — set OPENAI_API_KEY'}`);
