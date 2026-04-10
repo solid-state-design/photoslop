@@ -29,11 +29,11 @@ const stylePrompts = {
   waifu: "Transform this photo into Japanese anime waifu style. Use the aesthetic of modern anime with large sparkly eyes, colorful hair highlights, smooth cel-shaded rendering, and a soft romantic atmosphere with pastel tones and lens flare effects.",
 
   // Game-ify
-  gta: "Transform this photo into Grand Theft Auto V loading screen art style. Use that signature GTA brush-stroke illustration look with bold outlines, slightly exaggerated features, warm sunset tones, and the gritty urban aesthetic of Rockstar Games artwork.",
+  gta: "Transform this photo into a stylized video game loading screen illustration. Use bold brush-stroke artwork with strong outlines, slightly exaggerated features, warm sunset tones, and a cinematic urban aesthetic.",
 
   lego: "Transform this photo into a scene made entirely of Lego bricks and minifigures. Everything should look like real Lego pieces — characters as minifigures with yellow skin and printed faces, environment built from colorful Lego bricks with visible studs on top.",
 
-  fallout: "Transform this photo into Fallout retro-futuristic post-apocalyptic style. Use the 1950s atomic age aesthetic mixed with decay and rust. Add a Pip-Boy green tint, Vault-Tec propaganda poster feel, and that signature Fallout wasteland atmosphere.",
+  fallout: "Transform this photo into a retro-futuristic 1950s atomic age illustration style. Use vintage propaganda poster aesthetics with warm sepia and green tints, art deco elements, and a whimsical retrofuturism vibe.",
 
   mario: "Transform this photo into Super Mario Bros Nintendo game style. Make it look like a colorful Mario game world with bright primary colors, cartoon characters, coin blocks, pipes, and that cheerful Nintendo art style. Characters should look like Mario game characters.",
 
@@ -74,13 +74,12 @@ app.post('/api/slopify', async (req, res) => {
     } else if (hilarity > 25 && hilarity <= 50) {
       hilarilyModifier = ' Make it noticeably funny — exaggerate facial expressions, add a confused animal somewhere in the background, and make one object slightly too large.';
     } else if (hilarity > 50 && hilarity <= 75) {
-      hilarilyModifier = ' Make it very funny and absurd — wildly exaggerated googly-eyed expressions, random unexpected objects (rubber ducks, pizza slices, tiny hats on everything), at least one thing comically oversized, and everyone looks mildly panicked for no reason.';
+      hilarilyModifier = ' Make it very funny and absurd — wildly exaggerated googly-eyed expressions, random unexpected objects (rubber ducks, pizza slices, tiny hats on everything), at least one thing comically oversized, and everyone looks bewildered.';
     } else if (hilarity > 75) {
-      hilarilyModifier = ' Make this ABSOLUTELY UNHINGED and hilarious — maximum chaos energy. Insanely exaggerated expressions of shock and confusion, random absurd objects everywhere (giant rubber ducks, cats riding things, inexplicable explosions in the background, tiny top hats on everything), impossible proportions, someone holding a comically large sandwich, dramatic action-movie lighting on a totally mundane scene. Make people cry laughing.';
+      hilarilyModifier = ' Make this hilariously absurd — maximum silly energy. Comically exaggerated expressions of surprise and confusion, random ridiculous objects everywhere (giant rubber ducks, cats wearing tiny top hats, someone holding a comically large sandwich), impossible proportions, dramatic cinematic lighting on a totally mundane scene. Make it as goofy as possible.';
     }
 
-    // Prefix to help avoid safety filter rejections
-    const prompt = `Create a fun, family-friendly artistic illustration. ${basePrompt}${hilarilyModifier} Keep the result appropriate for all ages.`;
+    const prompt = `${basePrompt}${hilarilyModifier}`;
 
     console.log(`[Photoslop] Slopifying with style: ${style}, hilarity: ${hilarity}%`);
 
@@ -89,12 +88,30 @@ app.post('/api/slopify', async (req, res) => {
     const imageBuffer = Buffer.from(base64Data, 'base64');
     const imageFile = new File([imageBuffer], 'image.png', { type: 'image/png' });
 
-    const response = await openai.images.edit({
-      model: 'gpt-image-1',
-      image: imageFile,
-      prompt: prompt,
-      size: '1024x1024',
-    });
+    let response;
+    try {
+      response = await openai.images.edit({
+        model: 'gpt-image-1',
+        image: imageFile,
+        prompt: prompt,
+        size: '1024x1024',
+      });
+    } catch (apiErr) {
+      // If safety filter rejects, retry with a simpler prompt
+      if (apiErr.status === 400 && apiErr.message?.includes('safety')) {
+        console.log(`[Photoslop] Safety filter hit, retrying with simpler prompt...`);
+        const simplePrompt = `Reimagine this image as a fun, colorful ${style} style artistic illustration.`;
+        const retryFile = new File([imageBuffer], 'image.png', { type: 'image/png' });
+        response = await openai.images.edit({
+          model: 'gpt-image-1',
+          image: retryFile,
+          prompt: simplePrompt,
+          size: '1024x1024',
+        });
+      } else {
+        throw apiErr;
+      }
+    }
 
     console.log(`[Photoslop] Style ${style} complete!`);
 
